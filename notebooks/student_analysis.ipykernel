@@ -1,0 +1,106 @@
+#import libraries
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_theme(style="whitegrid")
+
+#load dataset
+df=pd.read_csv("C:\\Users\\faisa\\OneDrive\\Desktop\\Documents\\github projects\\Student_Performance_Analysis\\dataset\\StudentsPerformance.csv")
+print(df.head())
+print(df.shape)   # display rows and columns
+print(df.columns) # display all column names
+
+# Explore the dataset - EDA
+
+df.info() # display whole dataset info (rows,columns, data types)
+print(df.describe()) # display statistical summary (mean,median,max,min..)
+print(df.isnull().sum()) # Count missing values in each column
+print(df.duplicated().sum()) # Count duplicate duplicated rows
+
+# Data cleaning
+df=df.drop_duplicates()
+df["math score"]=df["math score"].fillna(df["math score"].median())
+df["reading score"]=df["reading score"].fillna(df["reading score"].median())
+df["writing score"]=df["writing score"].fillna(df["writing score"].median())
+
+# Calculate Total and Average scores
+
+subjects=["math score","reading score","writing score"]
+df["total_marks"]=df[subjects].sum(axis=1)  #row-wise total of each student
+df["average_marks"]=df[subjects].mean(axis=1) #row-wise average of each student
+print(df[["total_marks","average_marks"]].head())
+
+# Assign grades
+def calculate_grade(marks):
+    if marks >=90:
+        return "A"
+    elif marks>=80:
+        return "B"
+    elif marks>=70:
+        return "C"
+    elif marks>=60:
+        return "D"
+    elif marks>=50:
+        return "E"
+    elif marks<50:
+        return "F"
+
+df["grade"]=df["average_marks"].apply(calculate_grade)  #Assign grades to every students avg marks
+
+#Analysis
+print("Average Marks:",df["average_marks"].mean()) #Calculates avg marks of all students
+print("Median Marks:", df["average_marks"].median())  #Calculate middle value of avg students
+print("Highest Marks:",df["average_marks"].max()) #Calculate highest avg marks
+print("Lowest Marks:",df["average_marks"].min())#Calculate lowest avg marks
+print("Standard deviation:",df["average_marks"].std()) #Variation in students marks
+print("Subject wise Average:",df[subjects].mean()) #Calculate avg marks for each subject
+top_students=df.nlargest(10,"total_marks") #Selects top 10 students
+print(top_students)
+
+
+# Calculate Pass percentage
+df["result"]=np.where((df[subjects]>=40).all(axis=1),"Pass","Fail") # Assign pass if all subject marks atleast 40
+print(df["result"].value_counts())  # Count of pass and fail students
+pass_percentage=(df["result"].eq("Pass").mean()*100) # Calculate pass percenatge
+print("Pass percentage:",pass_percentage)
+
+#Visualizations
+#bar chart
+df[subjects].mean().plot(kind="bar",title="Average marks by subject")
+plt.xlabel("Subjects")  # Sets the X-axis label
+plt.ylabel("Average Marks")  # Sets the Y-axis label
+plt.tight_layout()  # Adjusts chart spacing
+plt.savefig("../visualizations/subject_average.png")  # Saves the chart as an image
+plt.show()  # Displays the chart
+
+#Count distribution
+sns.countplot(data=df,x="grade",order=["A","B","C","D","E","F"])
+plt.title("Student Grade Distribution")
+plt.xlabel("Grade")
+plt.ylabel("Number of students")
+plt.savefig("../visualizations/grade_distribution.png")  # Saves the chart
+plt.show()  # Displays the chart
+
+
+
+sns.histplot(data=df, x="average_marks", bins=15, kde=True)  # Creates a histogram showing the distribution of average marks
+plt.title("Distribution of Student Marks")  # Sets the chart title
+plt.xlabel("Average Marks")  # Sets the X-axis label
+plt.ylabel("Number of Students")  # Sets the Y-axis label
+plt.savefig("../visualizations/marks_distribution.png")  # Saves the chart
+plt.show()  # Displays the chart
+
+sns.barplot(data=df, x="gender", y="average_marks")  # Compares average marks across gender groups
+plt.title("Gender-wise Student Performance")  # Sets the chart title
+plt.xlabel("Gender")  # Sets the X-axis label
+plt.ylabel("Average Marks")  # Sets the Y-axis label
+plt.savefig("../visualizations/gender_performance.png")  # Saves the chart
+plt.show()  # Displays the chart
+
+sns.heatmap(df[subjects].corr(), annot=True, cmap="coolwarm")  # Creates a heatmap showing correlations between subjects
+plt.title("Subject Score Correlation")  # Sets the chart title
+plt.savefig("../visualizations/correlation_heatmap.png")  # Saves the chart
+plt.show()  # Displays the chart
